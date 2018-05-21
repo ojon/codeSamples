@@ -1,0 +1,61 @@
+survey --> cct{concat}
+survey75--> cct
+cct --> sv[surveys]
+sv --> f{filter}
+f --> sv2[surveys]
+
+cs["class_size"] --> |padded_csd|g{"genCol"}
+cs --> |SCHOOL CODE|g{"genCol"}
+g --> |DBN|cs2["class_size"]
+cs2 -->|"GRADE == 09-12"|f2{filter}
+f2-->cs3[class_size]
+cs3 -->|"PROGRAM TYPE  == GEN ED"|f3{filter}
+f3-->cs4[class_size]
+cs4 -->|"groupby DBN"|ag{agg}
+ag -->|np.mean|cs5[class_size]
+
+hs[hs_directory] --> |locations 1|flt{find_lat}
+hs --> |locations 1| flg{find_long}
+flt --> |lat|hs2[hs_directory]
+flg --> |long|hs2
+hs2 --> |lat|tn{to_numeric}
+hs2 --> |long|tn
+tn --> hs3[hs_directory]
+
+dem[demographics] --> |schoolyear == 20112012|f5{filter}
+f5 --> dem2[demographics]
+
+grad[graduation] --> |cohort == 2006|f6{filter}
+f6 --> grad2[graduation]
+grad2 --> |Demographics == Total Cohort|f7{filter}
+f7 --> grad3[graduation]
+
+ap[ap_2010] --> |AP Test Takers|tn2{to_numeric}
+ap[ap_2010] --> |Total Exams Taken|tn2
+ap[ap_2010] --> |Number of Exams with scores 3 4 or 5|tn2
+tn2 --> ap2[ap_2010]
+
+sat[sat_results] --> |SAT Math Avg. Score|tn3{to_numeric}
+sat --> |Total Exams Taken|tn3
+sat--> |Number of Exams with scores 3 4 or 5|tn3
+tn3 --> sat2[sat_results]
+sat2[sat_results] --> |SAT Math Avg. Score|sum{+}
+sat2 --> |Total Exams Taken|sum
+sat2--> |Number of Exams with scores 3 4 or 5|sum
+sum --> |sat_score|sat3[sat_results]
+
+
+sat3 --> |on DBN|m1{merge}
+ap2 --> |on DBN|m1
+m1 --> |left|c1[combined]
+c1 --> |on DBN|m2{merge}
+grad3 --> |on DBN|m2
+m2 --> |left|c2[combined]
+
+c2 --> |on DBN|m3{merge}
+cs5 --> |on DBN|m3
+dem2 --> |on DBN|m3
+sv2 --> |on DBN|m3
+hs3 --> |on DBN|m3
+m3 --> |inner|c3[combined]
+
